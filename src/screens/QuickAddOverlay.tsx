@@ -4,6 +4,7 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
+  TouchableWithoutFeedback,
   StyleSheet,
   Alert,
   ScrollView,
@@ -60,16 +61,20 @@ const QuickAddOverlay = () => {
   };
 
   return (
-    <View style={styles.backdrop}>
+    <TouchableOpacity
+      style={styles.backdrop}
+      activeOpacity={1}
+      onPress={handleClose}
+    >
       <StatusBar backgroundColor="transparent" translucent />
-      <TouchableOpacity style={styles.backdropTouchable} onPress={handleClose} activeOpacity={1} />
 
-      <KeyboardAvoidingView
-        behavior="padding"
-        style={styles.sheetWrapper}>
-        <View style={styles.sheet}>
-          {/* Handle bar */}
-          <View style={styles.handle} />
+      <TouchableWithoutFeedback>
+        <KeyboardAvoidingView
+          behavior="padding"
+          style={styles.sheetWrapper}>
+          <View style={styles.sheet}>
+            {/* Handle bar */}
+            <View style={styles.handle} />
 
           <Text style={styles.title}>Quick Add</Text>
 
@@ -152,7 +157,8 @@ const QuickAddOverlay = () => {
           </View>
         </View>
       </KeyboardAvoidingView>
-    </View>
+    </TouchableWithoutFeedback>
+    </TouchableOpacity>
   );
 };
 
@@ -161,9 +167,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     padding: 20,
-  },
-  backdropTouchable: {
-    ...StyleSheet.absoluteFillObject,
   },
   sheetWrapper: {
     width: '100%',

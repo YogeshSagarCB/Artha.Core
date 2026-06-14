@@ -9,8 +9,13 @@ const InsightsScreen = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [expenses, setExpenses] = useState<any[]>([]);
   const [insights, setInsights] = useState<any[]>([]);
+  const [expandedInsights, setExpandedInsights] = useState<Record<number, boolean>>({});
   const [generating, setGenerating] = useState(false);
   const [isInsightsExpanded, setIsInsightsExpanded] = useState(true);
+
+  const toggleInsight = (id: number) => {
+    setExpandedInsights(prev => ({ ...prev, [id]: !prev[id] }));
+  };
 
   const yearMonth = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
 
@@ -80,10 +85,20 @@ const InsightsScreen = () => {
           
           {insights.map(item => (
               <View key={item.id} style={styles.insightCard}>
-                  <Text style={styles.insightText}>{item.insight_text}</Text>
-                  <TouchableOpacity onPress={async () => { await deleteGlobalInsight(item.id); refreshData(); }}>
-                      <Text style={styles.deleteText}>Delete</Text>
-                  </TouchableOpacity>
+                  <View style={styles.insightHeader}>
+                    <Text style={styles.timestamp}>{item.timestamp}</Text>
+                    <TouchableOpacity onPress={() => toggleInsight(item.id)}>
+                        <Icon name={expandedInsights[item.id] !== false ? "expand-less" : "expand-more"} size={24} color="#333" />
+                    </TouchableOpacity>
+                  </View>
+                  {expandedInsights[item.id] !== false && (
+                    <>
+                      <Text style={styles.insightText}>{item.insight_text}</Text>
+                      <TouchableOpacity onPress={async () => { await deleteGlobalInsight(item.id); refreshData(); }}>
+                          <Text style={styles.deleteText}>Delete</Text>
+                      </TouchableOpacity>
+                    </>
+                  )}
               </View>
           ))}
         </View>
@@ -125,6 +140,8 @@ const styles = StyleSheet.create({
   amount: { fontSize: 16, fontWeight: 'bold' },
   empty: { textAlign: 'center', marginTop: 20, color: '#999' },
   insightCard: { backgroundColor: '#f3e5f5', padding: 15, borderRadius: 10, marginBottom: 10, elevation: 1 },
+  insightHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  timestamp: { fontSize: 12, color: '#7b1fa2', marginBottom: 5, fontWeight: 'bold' },
   insightText: { fontSize: 14, color: '#4a148c' },
   deleteText: { color: '#d32f2f', fontSize: 12, marginTop: 10, fontWeight: 'bold' }
 });

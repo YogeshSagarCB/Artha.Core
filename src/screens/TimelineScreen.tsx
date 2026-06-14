@@ -8,22 +8,29 @@ import { addNote, addExpense, deleteEvent, getSetting, addDailyInsight, updateEx
 import { generateInsights } from '../api/GeminiClient';
 
 // Component to handle expandable text
-const ExpandableInsight = ({ content }: { content: string }) => {
+const ExpandableText = ({ text, style }: { text: string; style?: any }) => {
   const [expanded, setExpanded] = useState(false);
-  const maxLength = 100;
-
-  if (content.length <= maxLength) {
-    return <Text style={styles.content}>{content}</Text>;
-  }
+  const [showToggle, setShowToggle] = useState(false);
+  const numberOfLines = 3;
 
   return (
     <View>
-      <Text style={styles.content}>
-        {expanded ? content : `${content.substring(0, maxLength)}...`}
+      <Text
+        style={style}
+        numberOfLines={expanded ? undefined : numberOfLines}
+        onTextLayout={(e) => {
+          if (e.nativeEvent.lines.length > numberOfLines) {
+            setShowToggle(true);
+          }
+        }}
+      >
+        {text}
       </Text>
-      <TouchableOpacity onPress={() => setExpanded(!expanded)}>
-        <Text style={styles.showMore}>{expanded ? 'Show Less' : 'Show More'}</Text>
-      </TouchableOpacity>
+      {showToggle && (
+        <TouchableOpacity onPress={() => setExpanded(!expanded)}>
+          <Text style={styles.showMore}>{expanded ? 'Show Less' : 'Show More'}</Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 };
@@ -153,14 +160,14 @@ const TimelineScreen = ({ navigation }: any) => {
         <View>
           <Text style={styles.amount}>₹{item.amount || 0}</Text>
           <Text style={styles.merchant}>{item.merchant || 'Unknown Merchant'} ({item.category || 'Uncategorized'})</Text>
-          {item.comment ? <Text style={styles.comment}>{item.comment}</Text> : null}
+          {item.comment ? <ExpandableText text={item.comment} style={styles.comment} /> : null}
         </View>
       )}
       {item.type === 'note' && (
-        <Text style={styles.content}>{item.content || ''}</Text>
+        <ExpandableText text={item.content || ''} style={styles.content} />
       )}
       {item.type === 'daily_insight' && (
-        <ExpandableInsight content={item.content} />
+        <ExpandableText text={item.content} style={styles.content} />
       )}
       
       <TouchableOpacity 

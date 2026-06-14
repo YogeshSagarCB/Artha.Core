@@ -77,6 +77,11 @@ When you want to forcefully reload, for example to reset the state of your app, 
 
 You've successfully run and modified your React Native App. :partying_face:
 
+## Recent Updates
+
+- **Timeline**: Added vertical height limits to cards, with "Show More/Hide" functionality for long content.
+- **Insights**: Added timestamps to global insights and included a collapse/expand toggle for individual insights.
+
 ### Now what?
 
 - If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).

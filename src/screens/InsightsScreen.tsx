@@ -4,8 +4,12 @@ import { useFocusEffect } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { getExpensesByCategory, getEvents, getSetting, addGlobalInsight, getGlobalInsights, deleteGlobalInsight } from '../database/NativeDatabase';
 import { generateInsights } from '../api/GeminiClient';
+import { useTheme } from '../theme/ThemeContext';
+import { createStyles as createBaseStyles } from '../theme/styleFactory';
 
 const InsightsScreen = () => {
+  const { theme } = useTheme();
+  const styles = createStyles(theme);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [expenses, setExpenses] = useState<any[]>([]);
   const [insights, setInsights] = useState<any[]>([]);
@@ -72,15 +76,15 @@ const InsightsScreen = () => {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
-      <TouchableOpacity onPress={() => setIsInsightsExpanded(!isInsightsExpanded)} style={styles.headerRow}>
+      <TouchableOpacity onPress={() => setIsInsightsExpanded(prev => !prev)} style={styles.headerRow}>
           <Text style={styles.sectionTitle}>Global Insights</Text>
-          <Icon name={isInsightsExpanded ? "expand-less" : "expand-more"} size={28} color="#333" />
+          <Icon name={isInsightsExpanded ? "expand-less" : "expand-more"} size={28} color={theme.text_primary} />
       </TouchableOpacity>
       
       {isInsightsExpanded && (
         <View>
           <TouchableOpacity style={styles.generateButton} onPress={handleGenerateAllInsights} disabled={generating}>
-              {generating ? <ActivityIndicator color="white" /> : <Text style={styles.buttonText}>Generate All-Time Insights</Text>}
+              {generating ? <ActivityIndicator color={theme.surface} /> : <Text style={styles.buttonText}>Generate All-Time Insights</Text>}
           </TouchableOpacity>
           
           {insights.map(item => (
@@ -88,7 +92,7 @@ const InsightsScreen = () => {
                   <View style={styles.insightHeader}>
                     <Text style={styles.timestamp}>{item.timestamp}</Text>
                     <TouchableOpacity onPress={() => toggleInsight(item.id)}>
-                        <Icon name={expandedInsights[item.id] !== false ? "expand-less" : "expand-more"} size={24} color="#333" />
+                        <Icon name={expandedInsights[item.id] !== false ? "expand-less" : "expand-more"} size={24} color={theme.text_primary} />
                     </TouchableOpacity>
                   </View>
                   {expandedInsights[item.id] !== false && (
@@ -105,10 +109,10 @@ const InsightsScreen = () => {
       )}
 
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => changeMonth(-1)}><Icon name="chevron-left" size={30} /></TouchableOpacity>
-        <Text style={styles.title}>{currentDate.toLocaleString('default', { month: 'long', year: 'numeric' })}</Text>
+        <TouchableOpacity onPress={() => changeMonth(-1)}><Icon name="chevron-left" size={30} color={theme.text_primary} /></TouchableOpacity>
+        <Text style={[styles.title, {color: theme.text_primary}]}>{currentDate.toLocaleString('default', { month: 'long', year: 'numeric' })}</Text>
         <TouchableOpacity onPress={() => changeMonth(1)} disabled={isCurrentMonth} style={{ opacity: isCurrentMonth ? 0.3 : 1 }}>
-            <Icon name="chevron-right" size={30} />
+            <Icon name="chevron-right" size={30} color={theme.text_primary} />
         </TouchableOpacity>
       </View>
 
@@ -125,25 +129,28 @@ const InsightsScreen = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f5f7f9' },
-  scrollContent: { padding: 20 },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, marginTop: 20 },
-  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
-  title: { fontSize: 20, fontWeight: 'bold' },
-  sectionTitle: { fontSize: 18, fontWeight: 'bold', color: '#333' },
-  subtitle: { fontSize: 16, color: '#666', marginBottom: 15 },
-  generateButton: { backgroundColor: '#9c27b0', padding: 15, borderRadius: 10, alignItems: 'center', marginBottom: 20 },
-  buttonText: { color: 'white', fontWeight: 'bold' },
-  row: { flexDirection: 'row', justifyContent: 'space-between', padding: 15, backgroundColor: 'white', borderRadius: 10, marginBottom: 10, elevation: 2 },
-  category: { fontSize: 16 },
-  amount: { fontSize: 16, fontWeight: 'bold' },
-  empty: { textAlign: 'center', marginTop: 20, color: '#999' },
-  insightCard: { backgroundColor: '#f3e5f5', padding: 15, borderRadius: 10, marginBottom: 10, elevation: 1 },
-  insightHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  timestamp: { fontSize: 12, color: '#7b1fa2', marginBottom: 5, fontWeight: 'bold' },
-  insightText: { fontSize: 14, color: '#4a148c' },
-  deleteText: { color: '#d32f2f', fontSize: 12, marginTop: 10, fontWeight: 'bold' }
-});
+const createStyles = (theme: any) => {
+    const base = createBaseStyles(theme);
+    return StyleSheet.create({
+      ...base,
+      scrollContent: { padding: 20 },
+      header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, marginTop: 20 },
+      headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
+      title: { fontSize: 20, fontWeight: 'bold' },
+      sectionTitle: { fontSize: 18, fontWeight: 'bold', color: theme.text_primary },
+      subtitle: { fontSize: 16, color: theme.text_secondary, marginBottom: 15 },
+      generateButton: { backgroundColor: theme.primary, padding: 15, borderRadius: 10, alignItems: 'center', marginBottom: 20 },
+      buttonText: { color: theme.surface, fontWeight: 'bold' },
+      row: { flexDirection: 'row', justifyContent: 'space-between', padding: 15, backgroundColor: theme.surface, borderRadius: 10, marginBottom: 10, elevation: 2 },
+      category: { fontSize: 16, color: theme.text_primary },
+      amount: { fontSize: 16, fontWeight: 'bold', color: theme.text_primary },
+      empty: { textAlign: 'center', marginTop: 20, color: theme.text_secondary },
+      insightCard: { backgroundColor: theme.surface, padding: 15, borderRadius: 10, marginBottom: 10, elevation: 1 },
+      insightHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+      timestamp: { fontSize: 12, color: theme.primary, marginBottom: 5, fontWeight: 'bold' },
+      insightText: { fontSize: 14, color: theme.text_primary },
+      deleteText: { color: theme.expense, fontSize: 12, marginTop: 10, fontWeight: 'bold' }
+    });
+};
 
 export default InsightsScreen;

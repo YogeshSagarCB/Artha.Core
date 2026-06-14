@@ -10,27 +10,20 @@ import { generateInsights } from '../api/GeminiClient';
 // Component to handle expandable text
 const ExpandableText = ({ text, style }: { text: string; style?: any }) => {
   const [expanded, setExpanded] = useState(false);
-  const [showToggle, setShowToggle] = useState(false);
-  const numberOfLines = 3;
+  const maxLength = 100;
+
+  if (text.length <= maxLength) {
+    return <Text style={style}>{text}</Text>;
+  }
 
   return (
     <View>
-      <Text
-        style={style}
-        numberOfLines={expanded ? undefined : numberOfLines}
-        onTextLayout={(e) => {
-          if (e.nativeEvent.lines.length > numberOfLines) {
-            setShowToggle(true);
-          }
-        }}
-      >
-        {text}
+      <Text style={style}>
+        {expanded ? text : `${text.substring(0, maxLength)}...`}
       </Text>
-      {showToggle && (
-        <TouchableOpacity onPress={() => setExpanded(!expanded)}>
-          <Text style={styles.showMore}>{expanded ? 'Show Less' : 'Show More'}</Text>
-        </TouchableOpacity>
-      )}
+      <TouchableOpacity onPress={() => setExpanded(!expanded)}>
+        <Text style={styles.showMore}>{expanded ? 'Show Less' : 'Show More'}</Text>
+      </TouchableOpacity>
     </View>
   );
 };

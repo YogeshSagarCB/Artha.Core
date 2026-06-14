@@ -124,11 +124,11 @@ export interface SmsLog {
 
 export const getEvents = (): Event[] => {
   const query = `
-    SELECT e.*, ex.amount, ex.merchant, ex.comment, ex.category, n.content
+    SELECT e.id, datetime(e.timestamp, 'localtime') as timestamp, e.type, ex.amount, ex.merchant, ex.comment, ex.category, n.content
     FROM events e
     LEFT JOIN expenses ex ON e.id = ex.event_id
     LEFT JOIN notes n ON e.id = n.event_id
-    ORDER BY e.timestamp ASC
+    ORDER BY datetime(e.timestamp, 'localtime') ASC
   `;
   const result = db.execute(query);
   return result.rows?._array as Event[];
@@ -156,7 +156,7 @@ export const addGlobalInsight = (text: string): number => {
 };
 
 export const getGlobalInsights = (): any[] => {
-  const result = db.execute('SELECT * FROM global_insights ORDER BY timestamp DESC');
+  const result = db.execute('SELECT id, datetime(timestamp, "localtime") as timestamp, insight_text FROM global_insights ORDER BY timestamp DESC');
   return result.rows?._array || [];
 };
 
@@ -198,7 +198,7 @@ export const saveSetting = (key: string, value: string): boolean => {
   return true;
 };
 export const getRawSmsLogs = (): SmsLog[] => {
-  const result = db.execute('SELECT * FROM raw_sms_logs ORDER BY received_at DESC');
+  const result = db.execute('SELECT id, sender, body, datetime(received_at, "localtime") as received_at, status FROM raw_sms_logs ORDER BY received_at DESC');
   return result.rows?._array as SmsLog[] || [];
 };
 export const decryptSms = async (logId: number): Promise<string> => {

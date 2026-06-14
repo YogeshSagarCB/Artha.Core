@@ -19,6 +19,7 @@ class MainApplication : Application(), ReactApplication {
           add(com.arthacore.modules.GoogleAuthPackage())
           add(com.arthacore.modules.SyncPackage())
           add(com.arthacore.modules.NotificationPackage())
+          add(com.arthacore.modules.FloatingWidgetPackage())
         },
     )
   }

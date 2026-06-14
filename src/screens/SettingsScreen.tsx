@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal, TextInput, Button, Alert, ScrollView, Linking, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Modal, TextInput, Button, Alert, ScrollView, Linking, ActivityIndicator, Switch, Platform, PermissionsAndroid } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { signIn, signOut, getCurrentUser, scheduleBackup, restoreFromDrive, User } from '../api/NativeAuth';
 import * as DB from '../database/NativeDatabase';
 import { fetchModels } from '../api/GeminiClient';
+import { useFloatingWidget } from '../hooks/useFloatingWidget';
 
 const SettingsScreen = ({ navigation }: any) => {
   const [user, setUser] = useState<User | null>(null);
@@ -31,13 +32,45 @@ const SettingsScreen = ({ navigation }: any) => {
   const [isRegexExpanded, setIsRegexExpanded] = useState(false);
   // Prompt State
   const [isPromptsExpanded, setIsPromptsExpanded] = useState(false);
+  // Floating Widget State
+  const [isWidgetExpanded, setIsWidgetExpanded] = useState(false);
+  const { isRunning, hasPermission, start, stop, requestPermission } = useFloatingWidget();
+  
+  // SMS Permission State
+  const [hasSmsPermission, setHasSmsPermission] = useState<boolean | null>(null);
 
   useEffect(() => {
     checkUser();
     refreshPatterns();
     loadSettings();
     refreshCategories();
+    checkSmsPermission();
   }, []);
+
+  const checkSmsPermission = async () => {
+    if (Platform.OS === 'android') {
+      const granted = await PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.RECEIVE_SMS);
+      setHasSmsPermission(granted);
+    }
+  };
+
+  const requestSmsPermission = async () => {
+    try {
+      const granted = await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.RECEIVE_SMS,
+        {
+          title: 'SMS Permission Required',
+          message: 'Artha needs access to your SMS to automatically log bank transactions.',
+          buttonNeutral: 'Ask Me Later',
+          buttonNegative: 'Cancel',
+          buttonPositive: 'Grant',
+        }
+      );
+      setHasSmsPermission(granted === PermissionsAndroid.RESULTS.GRANTED);
+    } catch (err) {
+      console.warn(err);
+    }
+  };
 
   const refreshCategories = () => {
     setCategories(DB.getCategories());
@@ -196,6 +229,23 @@ const SettingsScreen = ({ navigation }: any) => {
       </View>
 
       <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Permissions</Text>
+        <View style={styles.widgetPermissionRow}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.widgetLabel}>Read Bank SMS automatically</Text>
+            <Text style={[styles.widgetStatus, { color: hasSmsPermission ? '#4caf50' : '#f44336' }]}>
+              {hasSmsPermission === null ? 'Checking...' : hasSmsPermission ? '✓ Granted' : '✗ Not granted'}
+            </Text>
+          </View>
+          {!hasSmsPermission && (
+            <TouchableOpacity style={styles.permissionButton} onPress={requestSmsPermission}>
+              <Text style={styles.permissionButtonText}>Grant</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      </View>
+
+      <View style={styles.section}>
         <TouchableOpacity onPress={() => setIsRegexExpanded(!isRegexExpanded)} style={styles.headerRow}>
           <Text style={styles.sectionTitle}>Bank SMS Regex Patterns</Text>
           <Icon name={isRegexExpanded ? "expand-less" : "expand-more"} size={28} color="#333" />
@@ -228,6 +278,53 @@ const SettingsScreen = ({ navigation }: any) => {
           </View>
         )}
       </View>
+
+      {/* Floating Widget Section — Android only */}
+      {Platform.OS === 'android' && (
+        <View style={styles.section}>
+          <TouchableOpacity onPress={() => setIsWidgetExpanded(!isWidgetExpanded)} style={styles.headerRow}>
+            <Text style={styles.sectionTitle}>💬 Floating Widget</Text>
+            <Icon name={isWidgetExpanded ? 'expand-less' : 'expand-more'} size={28} color="#333" />
+          </TouchableOpacity>
+
+          {isWidgetExpanded && (
+            <View>
+              {/* Permission status */}
+              <View style={styles.widgetPermissionRow}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.widgetLabel}>"Display over other apps" permission</Text>
+                  <Text style={[styles.widgetStatus, { color: hasPermission ? '#4caf50' : '#f44336' }]}>
+                    {hasPermission === null ? 'Checking...' : hasPermission ? '✓ Granted' : '✗ Not granted'}
+                  </Text>
+                </View>
+                {!hasPermission && (
+                  <TouchableOpacity style={styles.permissionButton} onPress={requestPermission}>
+                    <Text style={styles.permissionButtonText}>Grant</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+
+              {/* Enable / disable toggle */}
+              <View style={styles.widgetToggleRow}>
+                <Text style={styles.widgetLabel}>
+                  {isRunning ? '🟢 Widget is active' : '⚫ Widget is off'}
+                </Text>
+                <Switch
+                  value={isRunning}
+                  onValueChange={(val) => (val ? start() : stop())}
+                  trackColor={{ false: '#ccc', true: '#90caf9' }}
+                  thumbColor={isRunning ? '#1E88E5' : '#f4f3f4'}
+                  disabled={hasPermission === false}
+                />
+              </View>
+
+              <Text style={styles.widgetHint}>
+                When enabled, a floating bubble appears over other apps. Tap it to quickly log an expense or note without opening Artha.
+              </Text>
+            </View>
+          )}
+        </View>
+      )}
 
       <View style={[styles.section, { marginBottom: 40 }]}>
         <Text style={[styles.sectionTitle, { marginBottom: 20 }]}>Data Management</Text>
@@ -288,7 +385,14 @@ const styles = StyleSheet.create({
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
   modalContent: { backgroundColor: 'white', padding: 25, borderRadius: 16, width: '90%' },
   modalTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 15 },
-  buttonSpacer: { height: 10 }
+  buttonSpacer: { height: 10 },
+  widgetPermissionRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 16, padding: 12, backgroundColor: '#f8f9fa', borderRadius: 10 },
+  widgetToggleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
+  widgetLabel: { fontSize: 14, fontWeight: '600', color: '#333', marginBottom: 2 },
+  widgetStatus: { fontSize: 12, fontWeight: 'bold' },
+  widgetHint: { fontSize: 12, color: '#888', lineHeight: 18, fontStyle: 'italic' },
+  permissionButton: { backgroundColor: '#1E88E5', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8 },
+  permissionButtonText: { color: '#fff', fontWeight: 'bold', fontSize: 13 },
 });
 
 export default SettingsScreen;

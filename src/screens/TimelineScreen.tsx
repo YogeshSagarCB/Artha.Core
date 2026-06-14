@@ -6,29 +6,34 @@ import { Picker } from '@react-native-picker/picker';
 import { useDatabase } from '../hooks/useDatabase';
 import { addNote, addExpense, deleteEvent, getSetting, addDailyInsight, updateExpense, updateNote, deleteInsight, getCategories, deleteDailyInsight } from '../database/NativeDatabase';
 import { generateInsights } from '../api/GeminiClient';
-
-// Component to handle expandable text
-const ExpandableText = ({ text, style }: { text: string; style?: any }) => {
-  const [expanded, setExpanded] = useState(false);
-  const maxLength = 100;
-
-  if (text.length <= maxLength) {
-    return <Text style={style}>{text}</Text>;
-  }
-
-  return (
-    <View>
-      <Text style={style}>
-        {expanded ? text : `${text.substring(0, maxLength)}...`}
-      </Text>
-      <TouchableOpacity onPress={() => setExpanded(!expanded)}>
-        <Text style={styles.showMore}>{expanded ? 'Show Less' : 'Show More'}</Text>
-      </TouchableOpacity>
-    </View>
-  );
-};
+import { useTheme } from '../theme/ThemeContext';
+import { createStyles as createBaseStyles } from '../theme/styleFactory';
 
 const TimelineScreen = ({ navigation }: any) => {
+  const { theme } = useTheme();
+  const styles = createStyles(theme);
+
+  // Component to handle expandable text
+  const ExpandableText = ({ text, style }: { text: string; style?: any }) => {
+    const [expanded, setExpanded] = useState(false);
+    const maxLength = 100;
+
+    if (text.length <= maxLength) {
+      return <Text style={style}>{text}</Text>;
+    }
+
+    return (
+      <View>
+        <Text style={style}>
+          {expanded ? text : `${text.substring(0, maxLength)}...`}
+        </Text>
+        <TouchableOpacity onPress={() => setExpanded(!expanded)}>
+          <Text style={styles.showMore}>{expanded ? 'Show Less' : 'Show More'}</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  };
+
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [showPicker, setShowPicker] = useState(false);
   const { items, loading, refresh } = useDatabase(date);
@@ -140,6 +145,24 @@ const TimelineScreen = ({ navigation }: any) => {
     }, 100);
   };
 
+  const getTypeEmoji = (type: string) => {
+    switch(type) {
+        case 'expense': return '💰';
+        case 'note': return '📝';
+        case 'daily_insight': return '🤖';
+        default: return '❓';
+    }
+  };
+
+  const getBadgeColor = (type: string) => {
+    switch(type) {
+      case 'expense': return theme.expense;
+      case 'note': return theme.note;
+      case 'daily_insight': return theme.primary;
+      default: return theme.text_secondary;
+    }
+  };
+
   const renderItem = ({ item }: { item: any }) => (
     <TouchableOpacity style={styles.card} onPress={() => item.type !== 'daily_insight' && handleEditPress(item)}>
       <View style={styles.cardHeader}>
@@ -166,7 +189,6 @@ const TimelineScreen = ({ navigation }: any) => {
       <TouchableOpacity 
         style={styles.deleteButton} 
         onPress={async () => { 
-          console.log('deleteDailyInsight function is:', deleteDailyInsight);
           Alert.alert('Delete', 'Delete this event?', [
             { text: 'Cancel' },
             { text: 'Delete', onPress: async () => { 
@@ -182,37 +204,21 @@ const TimelineScreen = ({ navigation }: any) => {
     </TouchableOpacity>
   );
 
-  const getTypeEmoji = (type: string) => {
-    switch(type) {
-        case 'expense': return '💰';
-        case 'note': return '📝';
-        case 'daily_insight': return '🤖';
-        default: return '❓';
-    }
-  };
-
-  const getBadgeColor = (type: string) => {
-    switch(type) {
-      case 'expense': return '#f44336';
-      case 'note': return '#2196f3';
-      case 'daily_insight': return '#9c27b0';
-      default: return '#9e9e9e';
-    }
-  };
-
   return (
     <View style={styles.container}>
       <View style={styles.dateHeader}>
-          <TouchableOpacity onPress={() => changeDate(-1)}><Image source={require('../assets/icons/TimelineIcon.png')} style={{width: 30, height: 30}} /></TouchableOpacity>
+          <TouchableOpacity onPress={() => changeDate(-1)} style={styles.navButton}>
+            <Text style={styles.navButtonText}>{'<'}</Text>
+          </TouchableOpacity>
           <TouchableOpacity onPress={() => setShowPicker(true)}>
             <Text style={styles.dateText}>{date}</Text>
           </TouchableOpacity>
           <TouchableOpacity 
             onPress={() => changeDate(1)}
             disabled={isToday}
-            style={{ opacity: isToday ? 0.3 : 1 }}
+            style={[styles.navButton, { opacity: isToday ? 0.3 : 1 }]}
           >
-            <Image source={require('../assets/icons/TimelineIcon.png')} style={{width: 30, height: 30, transform: [{scaleX: -1}]}} />
+            <Text style={styles.navButtonText}>{'>'}</Text>
           </TouchableOpacity>
       </View>
       
@@ -250,7 +256,7 @@ const TimelineScreen = ({ navigation }: any) => {
       
       <View style={styles.fabContainer}>
         <TouchableOpacity style={[styles.fab, styles.aiFab]} onPress={handleGenerateInsights} disabled={generating}>
-          {generating ? <ActivityIndicator color="white" /> : <Image source={require('../assets/icons/AiInsightsIcon.png')} style={{width: 40, height: 40}} resizeMode="contain" />}
+          {generating ? <ActivityIndicator color={theme.surface} /> : <Image source={require('../assets/icons/AiInsightsIcon.png')} style={{width: 40, height: 40}} resizeMode="contain" />}
         </TouchableOpacity>
         <TouchableOpacity style={[styles.fab, styles.addFab]} onPress={handleOpenAdd}>
           <Image source={require('../assets/icons/AddIcon.png')} style={{width: 40, height: 40}} resizeMode="contain" />
@@ -266,12 +272,12 @@ const TimelineScreen = ({ navigation }: any) => {
               {!isEditing && (
                 <View style={styles.radioGroup}>
                   <TouchableOpacity style={styles.radioItem} onPress={() => setType('note')}>
-                    <RadioButton value="note" status={type === 'note' ? 'checked' : 'unchecked'} onPress={() => setType('note')} />
-                    <Text>📝</Text>
+                    <RadioButton value="note" status={type === 'note' ? 'checked' : 'unchecked'} onPress={() => setType('note')} color={theme.primary} />
+                    <Text style={{color: theme.text_primary}}>📝</Text>
                   </TouchableOpacity>
                   <TouchableOpacity style={styles.radioItem} onPress={() => setType('expense')}>
-                    <RadioButton value="expense" status={type === 'expense' ? 'checked' : 'unchecked'} onPress={() => setType('expense')} />
-                    <Text>💰</Text>
+                    <RadioButton value="expense" status={type === 'expense' ? 'checked' : 'unchecked'} onPress={() => setType('expense')} color={theme.primary} />
+                    <Text style={{color: theme.text_primary}}>💰</Text>
                   </TouchableOpacity>
                 </View>
               )}
@@ -279,18 +285,19 @@ const TimelineScreen = ({ navigation }: any) => {
               {type === 'expense' && (
                 <View>
                   <Text style={styles.inputLabel}>Amount</Text>
-                  <TextInput placeholder="100.00" value={amount} onChangeText={setAmount} keyboardType="numeric" style={styles.input} />
+                  <TextInput placeholder="100.00" placeholderTextColor={theme.text_secondary} value={amount} onChangeText={setAmount} keyboardType="numeric" style={styles.input} />
                   <Text style={styles.inputLabel}>Merchant</Text>
-                  <TextInput placeholder="e.g. Amazon" value={merchant} onChangeText={setMerchant} style={styles.input} />
+                  <TextInput placeholder="e.g. Amazon" placeholderTextColor={theme.text_secondary} value={merchant} onChangeText={setMerchant} style={styles.input} />
                   <Text style={styles.inputLabel}>Category</Text>
                   <View style={styles.pickerContainer}>
                     <Picker
                       selectedValue={category}
                       onValueChange={(itemValue) => setCategory(itemValue)}
                       style={styles.picker}
-                      itemStyle={{ color: '#000000' }}
+                      itemStyle={{ color: theme.text_primary }}
+                      dropdownIconColor={theme.text_primary}
                     >
-                      {categories.map(cat => <Picker.Item key={cat} label={cat} value={cat} color="#000000" />)}
+                      {categories.map(cat => <Picker.Item key={cat} label={cat} value={cat} color={theme.text_primary} />)}
                     </Picker>
                   </View>
                 </View>
@@ -299,6 +306,7 @@ const TimelineScreen = ({ navigation }: any) => {
               <Text style={styles.inputLabel}>{type === 'expense' ? 'Comment (Optional)' : 'Content'}</Text>
               <TextInput
                 placeholder={type === 'expense' ? 'Comment' : 'Write your note here...'}
+                placeholderTextColor={theme.text_secondary}
                 value={value}
                 onChangeText={setValue}
                 style={[styles.input, { height: type === 'note' ? 100 : 45 }]}
@@ -306,8 +314,8 @@ const TimelineScreen = ({ navigation }: any) => {
               />
               
               <View style={styles.modalButtons}>
-                <Button title="Cancel" onPress={() => setModalVisible(false)} color="gray" />
-                <Button title={isEditing ? "Update" : "Save"} onPress={handleSave} color="#2196f3" />
+                <Button title="Cancel" onPress={() => setModalVisible(false)} color={theme.text_secondary} />
+                <Button title={isEditing ? "Update" : "Save"} onPress={handleSave} color={theme.primary} />
               </View>
             </ScrollView>
           </KeyboardAvoidingView>
@@ -317,40 +325,44 @@ const TimelineScreen = ({ navigation }: any) => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f5f7f9' },
-  listContent: { paddingBottom: 100 },
-  dateHeader: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', padding: 10, backgroundColor: 'white' },
-  dateText: { fontWeight: 'bold', fontSize: 16, marginHorizontal: 20 },
-  card: { backgroundColor: 'white', padding: 18, marginHorizontal: 15, marginVertical: 8, borderRadius: 12, elevation: 3 },
-  cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
-  timestamp: { fontSize: 12, color: '#888' },
-  badge: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 4 },
-  badgeText: { fontSize: 14 },
-  amount: { fontSize: 22, color: '#f44336', fontWeight: 'bold' },
-  merchant: { fontSize: 16, color: '#333', fontWeight: '600' },
-  comment: { fontSize: 14, color: '#666', fontStyle: 'italic', marginTop: 4 },
-  label: { fontSize: 16, color: '#444', marginTop: 4 },
-  content: { fontSize: 16, color: '#444', lineHeight: 22 },
-  showMore: { color: '#2196f3', marginTop: 5, fontWeight: 'bold' },
-  deleteButton: { marginTop: 15, alignSelf: 'flex-end', padding: 5 },
-  deleteText: { color: '#f44336', fontSize: 12, fontWeight: 'bold' },
-  empty: { textAlign: 'center', marginTop: 100, color: '#999', fontSize: 16 },
-  fabContainer: { position: 'absolute', bottom: 30, right: 30, flexDirection: 'row', gap: 15 },
-  fab: { width: 60, height: 60, borderRadius: 30, justifyContent: 'center', alignItems: 'center' },
-  addFab: { backgroundColor: 'transparent' },
-  aiFab: { backgroundColor: 'transparent' },
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
-  modalWrapper: { backgroundColor: 'white', borderRadius: 20, width: '90%', maxHeight: '80%' },
-  modalScrollContent: { padding: 20 },
-  modalTitle: { fontSize: 22, fontWeight: 'bold', marginBottom: 20, color: '#333' },
-  radioGroup: { flexDirection: 'row', justifyContent: 'space-around', marginBottom: 25, backgroundColor: '#f8f9fa', padding: 10, borderRadius: 10 },
-  radioItem: { flexDirection: 'row', alignItems: 'center' },
-  inputLabel: { fontSize: 14, color: '#666', marginBottom: 8, fontWeight: 'bold' },
-  input: { borderBottomWidth: 1, borderColor: '#ddd', marginBottom: 20, padding: 10, fontSize: 16, backgroundColor: '#fafafa' },
-  picker: { backgroundColor: '#fcfcfc', marginBottom: 20 },
-  pickerContainer: { borderWidth: 1, borderColor: '#ddd', borderRadius: 8, marginBottom: 15, backgroundColor: '#fafafa' },
-  modalButtons: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 10 }
-});
+const createStyles = (theme: any) => {
+    const base = createBaseStyles(theme);
+    return StyleSheet.create({
+      ...base,
+      listContent: { paddingBottom: 100 },
+      dateHeader: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', padding: 10, backgroundColor: theme.surface },
+      navButton: { padding: 10 },
+      navButtonText: { fontSize: 24, fontWeight: 'bold', color: theme.text_primary },
+      dateText: { fontWeight: 'bold', fontSize: 16, marginHorizontal: 20, color: theme.text_primary },
+      card: { backgroundColor: theme.surface, padding: 18, marginHorizontal: 15, marginVertical: 8, borderRadius: 12, elevation: 3 },
+      cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
+      timestamp: { fontSize: 12, color: theme.text_secondary },
+      badge: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 4 },
+      badgeText: { fontSize: 14 },
+      amount: { fontSize: 22, color: theme.expense, fontWeight: 'bold' },
+      merchant: { fontSize: 16, color: theme.text_primary, fontWeight: '600' },
+      comment: { fontSize: 14, color: theme.text_secondary, fontStyle: 'italic', marginTop: 4 },
+      content: { fontSize: 16, color: theme.text_primary, lineHeight: 22 },
+      showMore: { color: theme.primary, marginTop: 5, fontWeight: 'bold' },
+      deleteButton: { marginTop: 15, alignSelf: 'flex-end', padding: 5 },
+      deleteText: { color: theme.expense, fontSize: 12, fontWeight: 'bold' },
+      empty: { textAlign: 'center', marginTop: 100, color: theme.text_secondary, fontSize: 16 },
+      fabContainer: { position: 'absolute', bottom: 30, right: 30, flexDirection: 'row', gap: 15 },
+      fab: { width: 60, height: 60, borderRadius: 30, justifyContent: 'center', alignItems: 'center' },
+      addFab: { backgroundColor: 'transparent' },
+      aiFab: { backgroundColor: 'transparent' },
+      modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
+      modalWrapper: { backgroundColor: theme.surface, borderRadius: 20, width: '90%', maxHeight: '80%' },
+      modalScrollContent: { padding: 20 },
+      modalTitle: { fontSize: 22, fontWeight: 'bold', marginBottom: 20, color: theme.text_primary },
+      radioGroup: { flexDirection: 'row', justifyContent: 'space-around', marginBottom: 25, backgroundColor: theme.background, padding: 10, borderRadius: 10 },
+      radioItem: { flexDirection: 'row', alignItems: 'center' },
+      inputLabel: { fontSize: 14, color: theme.text_secondary, marginBottom: 8, fontWeight: 'bold' },
+      input: { borderBottomWidth: 1, borderColor: theme.border, marginBottom: 20, padding: 10, fontSize: 16, backgroundColor: theme.background, color: theme.text_primary },
+      picker: { backgroundColor: theme.background, marginBottom: 20 },
+      pickerContainer: { borderWidth: 1, borderColor: theme.border, borderRadius: 8, marginBottom: 15, backgroundColor: theme.background },
+      modalButtons: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 10 }
+    });
+};
 
 export default TimelineScreen;

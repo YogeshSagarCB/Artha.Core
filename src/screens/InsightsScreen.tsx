@@ -18,7 +18,10 @@ const InsightsScreen = () => {
   const [isInsightsExpanded, setIsInsightsExpanded] = useState(true);
 
   const toggleInsight = (id: number) => {
-    setExpandedInsights(prev => ({ ...prev, [id]: !prev[id] }));
+    setExpandedInsights(prev => {
+      const isCurrentlyExpanded = prev[id] !== false; // undefined or true means expanded
+      return { ...prev, [id]: !isCurrentlyExpanded };
+    });
   };
 
   const yearMonth = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
@@ -75,8 +78,19 @@ const InsightsScreen = () => {
     currentDate.getFullYear() === new Date().getFullYear();
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
-      <TouchableOpacity onPress={() => setIsInsightsExpanded(prev => !prev)} style={styles.headerRow}>
+    <ScrollView 
+      style={styles.container} 
+      contentContainerStyle={styles.scrollContent}
+      keyboardShouldPersistTaps="handled"
+    >
+      <TouchableOpacity 
+          onPress={() => {
+              console.log('Toggle pressed, current state:', isInsightsExpanded);
+              setIsInsightsExpanded(prev => !prev);
+          }} 
+          style={[styles.headerRow, { alignSelf: 'stretch' }]}
+          hitSlop={{top: 15, bottom: 15, left: 15, right: 15}}
+      >
           <Text style={styles.sectionTitle}>Global Insights</Text>
           <Icon name={isInsightsExpanded ? "expand-less" : "expand-more"} size={28} color={theme.text_primary} />
       </TouchableOpacity>

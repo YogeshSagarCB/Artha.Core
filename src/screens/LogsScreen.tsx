@@ -1,8 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, StyleSheet, TouchableOpacity, Modal, TextInput, Button, Alert } from 'react-native';
 import { getRawSmsLogs, decryptSms, addExpense, SmsLog } from '../database/NativeDatabase';
+import { useTheme } from '../theme/ThemeContext';
+import { createStyles as createBaseStyles } from '../theme/styleFactory';
 
 const LogsScreen = ({ navigation }: any) => {
+  const { theme } = useTheme();
+  const styles = createStyles(theme);
   const [logs, setLogs] = useState<SmsLog[]>([]);
   const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
@@ -78,6 +82,7 @@ const LogsScreen = ({ navigation }: any) => {
             <Text style={styles.smsBody}>"{decryptedBody}"</Text>
             <TextInput
               placeholder="Amount"
+              placeholderTextColor={theme.text_secondary}
               value={amount}
               onChangeText={setAmount}
               keyboardType="numeric"
@@ -85,13 +90,14 @@ const LogsScreen = ({ navigation }: any) => {
             />
             <TextInput
               placeholder="Merchant"
+              placeholderTextColor={theme.text_secondary}
               value={merchant}
               onChangeText={setMerchant}
               style={styles.input}
             />
             <View style={styles.modalButtons}>
-              <Button title="Close" onPress={() => setModalVisible(false)} color="gray" />
-              <Button title="Add Expense" onPress={handleConvert} color="#e91e63" />
+              <Button title="Close" onPress={() => setModalVisible(false)} color={theme.text_secondary} />
+              <Button title="Add Expense" onPress={handleConvert} color={theme.primary} />
             </View>
           </View>
         </View>
@@ -100,22 +106,25 @@ const LogsScreen = ({ navigation }: any) => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f5f5f5' },
-  card: { backgroundColor: 'white', padding: 15, margin: 10, borderRadius: 8, elevation: 1 },
-  timestamp: { fontSize: 12, color: '#666' },
-  sender: { fontWeight: 'bold', fontSize: 16 },
-  row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  statusBadge: { paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 },
-  statusText: { color: 'white', fontSize: 10, fontWeight: 'bold' },
-  spamLink: { padding: 15, alignItems: 'center', backgroundColor: '#eee' },
-  spamLinkText: { color: '#2196f3', fontWeight: 'bold' },
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'center', alignItems: 'center' },
-  modalContent: { backgroundColor: 'white', padding: 20, borderRadius: 10, width: '90%' },
-  modalTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 10 },
-  smsBody: { fontStyle: 'italic', backgroundColor: '#eee', padding: 10, borderRadius: 5, marginBottom: 15 },
-  input: { borderBottomWidth: 1, borderColor: '#ddd', marginBottom: 15, padding: 8 },
-  modalButtons: { flexDirection: 'row', justifyContent: 'space-between' }
-});
+const createStyles = (theme: any) => {
+    const base = createBaseStyles(theme);
+    return StyleSheet.create({
+      ...base,
+      card: { backgroundColor: theme.surface, padding: 15, margin: 10, borderRadius: 8, elevation: 1 },
+      timestamp: { fontSize: 12, color: theme.text_secondary },
+      sender: { fontWeight: 'bold', fontSize: 16, color: theme.text_primary },
+      row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+      statusBadge: { paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 },
+      statusText: { color: theme.surface, fontSize: 10, fontWeight: 'bold' },
+      spamLink: { padding: 15, alignItems: 'center', backgroundColor: theme.surface },
+      spamLinkText: { color: theme.primary, fontWeight: 'bold' },
+      modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'center', alignItems: 'center' },
+      modalContent: { backgroundColor: theme.surface, padding: 20, borderRadius: 10, width: '90%' },
+      modalTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 10, color: theme.text_primary },
+      smsBody: { fontStyle: 'italic', backgroundColor: theme.background, padding: 10, borderRadius: 5, marginBottom: 15, color: theme.text_primary },
+      input: { borderBottomWidth: 1, borderColor: theme.border, marginBottom: 15, padding: 8, color: theme.text_primary },
+      modalButtons: { flexDirection: 'row', justifyContent: 'space-between' }
+    });
+};
 
 export default LogsScreen;

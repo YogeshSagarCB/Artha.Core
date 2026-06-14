@@ -1,8 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, StyleSheet, TouchableOpacity, Modal, TextInput, Button, Alert } from 'react-native';
-import { getRawSmsLogs, decryptSms, addExpense, SmsLog } from '../database/NativeDatabase';
+import { View, Text, FlatList, StyleSheet } from 'react-native';
+import { getRawSmsLogs, SmsLog } from '../database/NativeDatabase';
+import { useTheme } from '../theme/ThemeContext';
+import { createStyles as createBaseStyles } from '../theme/styleFactory';
 
 const SpamLogsScreen = ({ navigation }: any) => {
+  const { theme } = useTheme();
+  const styles = createStyles(theme);
   const [logs, setLogs] = useState<SmsLog[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -37,11 +41,14 @@ const SpamLogsScreen = ({ navigation }: any) => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f5f5f5' },
-  card: { backgroundColor: 'white', padding: 15, margin: 10, borderRadius: 8, elevation: 1 },
-  timestamp: { fontSize: 12, color: '#666' },
-  sender: { fontWeight: 'bold', fontSize: 16, marginVertical: 5 },
-});
+const createStyles = (theme: any) => {
+    const base = createBaseStyles(theme);
+    return StyleSheet.create({
+      ...base,
+      card: { backgroundColor: theme.surface, padding: 15, margin: 10, borderRadius: 8, elevation: 1 },
+      timestamp: { fontSize: 12, color: theme.text_secondary },
+      sender: { fontWeight: 'bold', fontSize: 16, marginVertical: 5, color: theme.text_primary },
+    });
+};
 
 export default SpamLogsScreen;

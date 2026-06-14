@@ -16,6 +16,8 @@ import { Picker } from '@react-native-picker/picker';
 import { RadioButton } from 'react-native-paper';
 import FloatingWidget from '../modules/FloatingWidget';
 import { addNote, addExpense, getCategories } from '../database/NativeDatabase';
+import { useTheme } from '../theme/ThemeContext';
+import { createStyles } from '../theme/styleFactory';
 
 /**
  * QuickAddOverlay
@@ -26,7 +28,138 @@ import { addNote, addExpense, getCategories } from '../database/NativeDatabase';
  * It must be registered as a separate root component in index.js:
  *   AppRegistry.registerComponent('QuickAddOverlay', () => QuickAddOverlay);
  */
+const getQuickAddStyles = (theme: any) => {
+    const base = createStyles(theme);
+    return StyleSheet.create({
+      ...base,
+      backdrop: {
+        flex: 1,
+        justifyContent: 'center',
+        padding: 20,
+        backgroundColor: 'rgba(0,0,0,0.5)'
+      },
+      sheetWrapper: {
+        width: '100%',
+      },
+      sheet: {
+        backgroundColor: theme.surface,
+        borderRadius: 24,
+        paddingHorizontal: 20,
+        paddingBottom: 24,
+        paddingTop: 24,
+        elevation: 24,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.15,
+        shadowRadius: 12,
+        maxHeight: '95%',
+      },
+      handle: {
+        display: 'none',
+      },
+      title: {
+        fontSize: 20,
+        fontWeight: '700',
+        color: theme.text_primary,
+        marginBottom: 18,
+        textAlign: 'center',
+      },
+      typeRow: {
+        flexDirection: 'row',
+        backgroundColor: theme.background,
+        borderRadius: 12,
+        padding: 4,
+        marginBottom: 20,
+      },
+      typeBtn: {
+        flex: 1,
+        paddingVertical: 10,
+        borderRadius: 10,
+        alignItems: 'center',
+      },
+      typeBtnActive: {
+        backgroundColor: theme.surface,
+        elevation: 2,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.1,
+        shadowRadius: 3,
+      },
+      typeBtnText: {
+        fontSize: 14,
+        color: theme.text_secondary,
+        fontWeight: '600',
+      },
+      typeBtnTextActive: {
+        color: theme.primary,
+      },
+      label: {
+        fontSize: 13,
+        fontWeight: '700',
+        color: theme.text_secondary,
+        marginBottom: 6,
+        textTransform: 'uppercase',
+        letterSpacing: 0.5,
+      },
+      input: {
+        backgroundColor: theme.background,
+        borderWidth: 1,
+        borderColor: theme.border,
+        borderRadius: 10,
+        paddingHorizontal: 14,
+        paddingVertical: 12,
+        fontSize: 16,
+        color: theme.text_primary,
+        marginBottom: 16,
+      },
+      textArea: {
+        height: 90,
+        textAlignVertical: 'top',
+      },
+      pickerContainer: {
+        borderWidth: 1,
+        borderColor: theme.border,
+        borderRadius: 10,
+        backgroundColor: theme.background,
+        marginBottom: 16,
+        overflow: 'hidden',
+      },
+      picker: {
+        color: theme.text_primary,
+      },
+      buttonRow: {
+        flexDirection: 'row',
+        gap: 12,
+        marginTop: 8,
+      },
+      button: {
+        flex: 1,
+        paddingVertical: 14,
+        borderRadius: 12,
+        alignItems: 'center',
+      },
+      cancelButton: {
+        backgroundColor: theme.background,
+      },
+      cancelButtonText: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: theme.text_secondary,
+      },
+      saveButton: {
+        backgroundColor: theme.primary,
+      },
+      saveButtonText: {
+        fontSize: 16,
+        fontWeight: '700',
+        color: theme.surface,
+      },
+    });
+};
+
 const QuickAddOverlay = () => {
+  const { theme } = useTheme();
+  const styles = getQuickAddStyles(theme);
   const [type, setType] = useState<'note' | 'expense'>('expense');
   const [value, setValue] = useState('');
   const [amount, setAmount] = useState('');
@@ -103,7 +236,7 @@ const QuickAddOverlay = () => {
                 <TextInput
                   style={styles.input}
                   placeholder="0.00"
-                  placeholderTextColor="#aaa"
+                  placeholderTextColor={theme.text_secondary}
                   value={amount}
                   onChangeText={setAmount}
                   keyboardType="numeric"
@@ -113,7 +246,7 @@ const QuickAddOverlay = () => {
                 <TextInput
                   style={styles.input}
                   placeholder="e.g. Swiggy"
-                  placeholderTextColor="#aaa"
+                  placeholderTextColor={theme.text_secondary}
                   value={merchant}
                   onChangeText={setMerchant}
                 />
@@ -124,9 +257,9 @@ const QuickAddOverlay = () => {
                     selectedValue={category}
                     onValueChange={(val) => setCategory(val)}
                     style={styles.picker}
-                    dropdownIconColor="#333">
+                    dropdownIconColor={theme.text_primary}>
                     {categories.map((cat) => (
-                      <Picker.Item key={cat} label={cat} value={cat} color="#000" />
+                      <Picker.Item key={cat} label={cat} value={cat} color={theme.text_primary} />
                     ))}
                   </Picker>
                 </View>
@@ -139,7 +272,7 @@ const QuickAddOverlay = () => {
             <TextInput
               style={[styles.input, type === 'note' && styles.textArea]}
               placeholder={type === 'expense' ? 'Add a comment...' : 'Write your note...'}
-              placeholderTextColor="#aaa"
+              placeholderTextColor={theme.text_secondary}
               value={value}
               onChangeText={setValue}
               multiline={type === 'note'}
@@ -161,129 +294,5 @@ const QuickAddOverlay = () => {
     </TouchableOpacity>
   );
 };
-
-const styles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
-    justifyContent: 'center',
-    padding: 20,
-  },
-  sheetWrapper: {
-    width: '100%',
-  },
-  sheet: {
-    backgroundColor: '#ffffff',
-    borderRadius: 24,
-    paddingHorizontal: 20,
-    paddingBottom: 24,
-    paddingTop: 24,
-    elevation: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    maxHeight: '95%',
-  },
-  handle: {
-    display: 'none',
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#1a1a2e',
-    marginBottom: 18,
-    textAlign: 'center',
-  },
-  typeRow: {
-    flexDirection: 'row',
-    backgroundColor: '#f1f3f5',
-    borderRadius: 12,
-    padding: 4,
-    marginBottom: 20,
-  },
-  typeBtn: {
-    flex: 1,
-    paddingVertical: 10,
-    borderRadius: 10,
-    alignItems: 'center',
-  },
-  typeBtnActive: {
-    backgroundColor: '#ffffff',
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-  },
-  typeBtnText: {
-    fontSize: 14,
-    color: '#888',
-    fontWeight: '600',
-  },
-  typeBtnTextActive: {
-    color: '#1E88E5',
-  },
-  label: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#555',
-    marginBottom: 6,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  input: {
-    backgroundColor: '#f8f9fa',
-    borderWidth: 1,
-    borderColor: '#e9ecef',
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 16,
-    color: '#333',
-    marginBottom: 16,
-  },
-  textArea: {
-    height: 90,
-    textAlignVertical: 'top',
-  },
-  pickerContainer: {
-    borderWidth: 1,
-    borderColor: '#e9ecef',
-    borderRadius: 10,
-    backgroundColor: '#f8f9fa',
-    marginBottom: 16,
-    overflow: 'hidden',
-  },
-  picker: {
-    color: '#333',
-  },
-  buttonRow: {
-    flexDirection: 'row',
-    gap: 12,
-    marginTop: 8,
-  },
-  button: {
-    flex: 1,
-    paddingVertical: 14,
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  cancelButton: {
-    backgroundColor: '#f1f3f5',
-  },
-  cancelButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#555',
-  },
-  saveButton: {
-    backgroundColor: '#1E88E5',
-  },
-  saveButtonText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#fff',
-  },
-});
 
 export default QuickAddOverlay;

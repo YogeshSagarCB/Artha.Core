@@ -6,8 +6,13 @@ import { signIn, signOut, getCurrentUser, scheduleBackup, restoreFromDrive, User
 import * as DB from '../database/NativeDatabase';
 import { fetchModels } from '../api/GeminiClient';
 import { useFloatingWidget } from '../hooks/useFloatingWidget';
+import { useTheme } from '../theme/ThemeContext';
+import { createStyles } from '../theme/styleFactory';
 
 const SettingsScreen = ({ navigation }: any) => {
+  const { theme, isDark, toggleTheme } = useTheme();
+  const styles = createStyles(theme);
+  
   const [user, setUser] = useState<User | null>(null);
   const [patterns, setPatterns] = useState<DB.RegexPattern[]>([]);
   const [geminiKey, setGeminiKey] = useState('');
@@ -146,6 +151,14 @@ const SettingsScreen = ({ navigation }: any) => {
 
   return (
     <ScrollView style={styles.container}>
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Appearance</Text>
+        <View style={styles.widgetToggleRow}>
+            <Text style={styles.widgetLabel}>Dark Mode</Text>
+            <Switch value={isDark} onValueChange={toggleTheme} />
+        </View>
+      </View>
+
       <View style={styles.section}>
         <TouchableOpacity onPress={() => setIsPromptsExpanded(!isPromptsExpanded)} style={styles.headerRow}>
           <Text style={styles.sectionTitle}>Gemini AI Configuration</Text>
@@ -359,40 +372,5 @@ const SettingsScreen = ({ navigation }: any) => {
     </ScrollView>
   );
 };
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f0f2f5', padding: 15 },
-  section: { backgroundColor: 'white', padding: 20, borderRadius: 16, marginBottom: 15, elevation: 2 },
-  sectionTitle: { fontSize: 18, fontWeight: 'bold', color: '#333' },
-  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15 },
-  input: { borderBottomWidth: 1, borderColor: '#ddd', marginBottom: 15, padding: 8, fontSize: 16 },
-  inputLabel: { fontSize: 13, color: '#666', fontWeight: 'bold', marginBottom: 5 },
-  pickerContainer: { borderWidth: 1, borderColor: '#ddd', borderRadius: 8, marginBottom: 15, backgroundColor: '#fafafa' },
-  picker: { backgroundColor: '#fcfcfc' },
-  categoryInput: { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
-  categoryList: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  categoryTag: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#e0e0e0', padding: 8, borderRadius: 20, paddingHorizontal: 12 },
-  tagText: { marginRight: 5 },
-  addButton: { padding: 5 },
-  addPatternButton: { backgroundColor: '#e3f2fd', padding: 12, borderRadius: 8, alignItems: 'center', marginBottom: 10 },
-  addPatternText: { color: '#1976d2', fontWeight: 'bold' },
-  patternCard: { borderBottomWidth: 1, borderColor: '#eee', paddingVertical: 12 },
-  patternName: { fontWeight: 'bold', color: '#333' },
-  patternStr: { fontFamily: 'monospace', color: '#666', fontSize: 12 },
-  patternActions: { flexDirection: 'row', marginTop: 8 },
-  editText: { color: '#4caf50', fontSize: 12, fontWeight: 'bold' },
-  deleteText: { color: '#f44336', fontSize: 12, fontWeight: 'bold' },
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
-  modalContent: { backgroundColor: 'white', padding: 25, borderRadius: 16, width: '90%' },
-  modalTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 15 },
-  buttonSpacer: { height: 10 },
-  widgetPermissionRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 16, padding: 12, backgroundColor: '#f8f9fa', borderRadius: 10 },
-  widgetToggleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
-  widgetLabel: { fontSize: 14, fontWeight: '600', color: '#333', marginBottom: 2 },
-  widgetStatus: { fontSize: 12, fontWeight: 'bold' },
-  widgetHint: { fontSize: 12, color: '#888', lineHeight: 18, fontStyle: 'italic' },
-  permissionButton: { backgroundColor: '#1E88E5', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8 },
-  permissionButtonText: { color: '#fff', fontWeight: 'bold', fontSize: 13 },
-});
 
 export default SettingsScreen;
